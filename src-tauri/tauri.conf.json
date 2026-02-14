@@ -49,7 +49,7 @@
       }
     },
     "updater": {
-      "active": false,
+      "active": false
     },
     "allowlist": {
       "all": true
