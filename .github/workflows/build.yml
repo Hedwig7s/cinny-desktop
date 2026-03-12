@@ -1,0 +1,57 @@
+name: Build and Release Electron App
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: |
+          npm install
+          cd cinny && npm install
+
+      - name: Prepare Config
+
+        run: cp config.json cinny/
+        shell: bash
+
+      - name: Build and Package
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            npm run build:win
+          else
+            npm run build:linux
+          fi
+        shell: bash
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cinny-build-${{ matrix.os }}
+          path: |
+            dist/*.exe
+            dist/*.zip
+            dist/*.AppImage
+          if-no-files-found: error
