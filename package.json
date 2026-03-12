@@ -2,33 +2,139 @@
   "name": "cinny",
   "version": "4.11.2",
   "description": "Yet another matrix client",
-  "main": "index.js",
+  "main": "src/main.js",
   "engines": {
     "node": ">=16.0.0"
   },
   "scripts": {
-    "tauri": "cp config.json cinny/ && tauri",
-    "release": "node scripts/release.mjs"
+    "start": "electron .",
+    "dev": "cp config.json cinny/ && concurrently -k -n vite,electron -c cyan,yellow \"npm run dev:vite\" \"npm run dev:electron\"",
+    "dev:vite": "cd cinny && npm start",
+    "dev:electron": "wait-on http://localhost:8080 && electron . --dev",
+    "build": "cp config.json cinny/ && npm run build:frontend && electron-builder",
+    "build:frontend": "cd cinny && npm run build",
+    "build:win": "npm run build:frontend && electron-builder --win",
+    "build:mac": "npm run build:frontend && electron-builder --mac",
+    "build:linux": "npm run build:frontend && electron-builder --linux",
+    "release": "node scripts/release.mjs",
+    "postinstall": "electron-builder install-app-deps"
   },
   "keywords": [],
   "author": "Ajay Bura",
   "license": "AGPL-3.0-only",
   "dependencies": {
-    "@tauri-apps/api": "2.7.0",
-    "@tauri-apps/plugin-clipboard-manager": "2.3.0",
-    "@tauri-apps/plugin-dialog": "2.3.2",
-    "@tauri-apps/plugin-fs": "2.4.1",
-    "@tauri-apps/plugin-global-shortcut": "2.3.0",
-    "@tauri-apps/plugin-http": "2.5.1",
-    "@tauri-apps/plugin-notification": "2.3.0",
-    "@tauri-apps/plugin-os": "2.3.0",
-    "@tauri-apps/plugin-process": "2.3.0",
-    "@tauri-apps/plugin-shell": "2.3.0",
-    "@tauri-apps/plugin-updater": "2.9.0"
+    "electron-updater": "^6.1.7",
+    "electron-window-state": "^5.0.3"
   },
   "devDependencies": {
     "@actions/github": "6.0.0",
-    "@tauri-apps/cli": "2.7.1",
+    "concurrently": "^8.2.0",
+    "wait-on": "^7.2.0",
+    "@electron/notarize": "^2.3.0",
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.0",
     "node-fetch": "3.3.2"
+  },
+  "build": {
+    "appId": "in.cinny.app",
+    "productName": "Cinny",
+    "copyright": "AGPL-3.0-only",
+    "directories": {
+      "buildResources": "icons"
+    },
+    "files": [
+      "src/**/*",
+      "icons/**/*",
+      "cinny/dist/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "cinnyapp",
+      "repo": "cinny-desktop",
+      "releaseType": "release"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "icons/icon.icns",
+      "category": "public.app-category.social-networking",
+      "minimumSystemVersion": "10.13.0",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "entitlements.mac.plist",
+      "entitlementsInherit": "entitlements.mac.plist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "icons/icon.ico",
+      "publisherName": "Ajay Bura",
+      "signingHashAlgorithms": [
+        "sha256"
+      ]
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "rpm",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "icons",
+      "category": "Network;InstantMessaging;Chat",
+      "description": "Yet another matrix client"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "icons/icon.ico",
+      "uninstallerIcon": "icons/icon.ico"
+    },
+    "afterSign": "scripts/notarize.js"
   }
 }
